@@ -1,5 +1,5 @@
-import math
 
+import math
 import bluetooth as bt
 import time
 
@@ -61,16 +61,36 @@ class commControlPanel:
         self.disAddr = "C4:22:04:06:09:E5"
         self.disPort = 1
         self.bleSocket = bt.BluetoothSocket(bt.RFCOMM)
+        self.windowPosNow    = 1
+        self.windowSizeNow   = 1
+        self.windowThreshold = 1
+        self.windowRstCnt    = 0
 
     def packetSend(self, cont):
         contToSend = self.contEncode(cont)
         try:
             self.bleSocket.connect((self.disAddr, self.disPort))
             self.bleSocket.send(contToSend)
-            self.bleSocket.close()
+            if self.windowPosNow >= self.windowSizeNow:
+                if self.windowSizeNow >= self.windowThreshold:
+                    self.windowSizeNow += 1
+                else:
+                    self.windowSizeNow <<= 1
+                self.windowPosNow = 0
+                self.windowRstCnt = 0
+                self.bleSocket.close()
+            self.windowPosNow += 1
+            # self.bleSocket.close()
             print("[COMM CTRL][PKT] PKT Send OK\r\n")
         except Exception as e:
             print("[COMM CTRL][PKT] socket error:\r\n", e)
+            self.windowThreshold = self.windowSizeNow >> 1
+            self.windowRstCnt += 1
+            if self.windowRstCnt >= 3:
+                self.windowSizeNow = 1
+                self.windowRstCnt  = 0
+            else:
+                self.windowSizeNow = self.windowThreshold
             sock.close()
 
     @staticmethod
@@ -80,7 +100,7 @@ class commControlPanel:
         ret += "tot:%d " % (len(cont))
         for key in cont:
             t = cont[key]
-            ret += "%d,%d,%d,%d,%d;" % (t.name, t.cat, t.xVal, t.yVal, t.alt)
+            ret += "%d,%d,%d,%d;" % (t.cat, t.xVal, t.yVal, t.alt)
         if DEBUG:
             print("[COMM CTRL][ENCODE] " + ret)
         return ret
