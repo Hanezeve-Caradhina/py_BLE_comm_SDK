@@ -9,6 +9,11 @@ import re
 DEBUG = True
 ALT_SPD = 114514
 CONGESTION_CONTROL_ENABLED = False
+PAIR_PIN = 2501
+disServUUID = "0000FFE0"
+disCharUUID = "0000FFE1"
+disName = "HCBRLRCV"
+ADDR_FILE = "addr.dat"
 
 
 class vehicleCat:
@@ -63,6 +68,8 @@ class commControlPanel:
     def __init__(self):
         self.blePowerCTRL("ON")
         self.disAddr = self.readAddrFromFile()
+        if self.disAddr == "":
+            self.findDevice(114514)
         self.disPort = 1
         self.bleSocket = bt.BluetoothSocket(bt.RFCOMM)
 
@@ -73,7 +80,7 @@ class commControlPanel:
             self.windowRstCnt = 0
 
     @staticmethod
-    def blePowerCTRL(sta):
+    def blePowerCTRL(sta="ON"):
         try:
             os.system("rfkill unblock bluetooth")
             if sta == "ON":
@@ -85,6 +92,29 @@ class commControlPanel:
             print("[POWER CTRL] ", e)
             os.system("bluetoothctl power off")
 
+    # nearby_devices = bt.discover_devices(5, flush_cache=True, lookup_names=True)
+
+    # print("Found {} devices.".format(len(nearby_devices)))
+
+    # print(nearby_devices)
+
+    # sock = bt.BluetoothSocket(bt.RFCOMM)
+
+    def findDevice(self, times):
+        name = ""
+        addr = ""
+        while times >= 0:
+            times -= 1
+            devices = bt.discover_devices(5, lookup_names=True)
+            for item in devices:
+                if (item[1] == disName) and self.checkMacAddr(item[0]):
+                    print("[COMM CTRL][DEVICE SCAN] FOUND: ", item)
+                    self.disAddr = item[0]
+                    self.writeAddrToFile(item[0])
+                    return True
+        print("[COMM CTRL][DEVICE SCAN] Fail.")
+        return False
+
     @staticmethod
     def checkMacAddr(macAddr):
         pattern = re.compile(r"^\s*([0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}\s*$")
@@ -94,7 +124,7 @@ class commControlPanel:
             return False
 
     def readAddrFromFile(self):
-        addrFile = open("addr.dat", "r")
+        addrFile = open(ADDR_FILE, "r")
         addr = addrFile.read()
         addrFile.close()
         print("[COMM CTRL][READ ADDR] " + addr)
@@ -105,10 +135,16 @@ class commControlPanel:
             print("[COMM CTRL][READ ADDR] fail")
             return ""
 
+    @staticmethod
+    def writeAddrToFile(addr):
+        addrFile = open(ADDR_FILE, "w", encoding="utf-8")
+        addrFile.write(addr)
+        addrFile.close()
+
     def packetSend(self, cont):
         contToSend = self.contEncode(cont)
         try:
-            if not self.checkMacAddr(self.disAddr):
+            if self.disAddr == "":
                 raise Exception("MAC Address illegal: " + self.disAddr)
             if CONGESTION_CONTROL_ENABLED:
                 self.bleSocket.connect((self.disAddr, self.disPort))
@@ -123,14 +159,14 @@ class commControlPanel:
                     self.bleSocket.close()
                 self.windowPosNow += 1
                 # self.bleSocket.close()
-                print("[COMM CTRL][PKT] PKT Send OK\r\n")
+                print("[COMM CTRL][PKT] PKT Send OK")
                 # print(time.time())
             else:
                 self.bleSocket = bt.BluetoothSocket(bt.RFCOMM)
                 self.bleSocket.connect((self.disAddr, self.disPort))
                 self.bleSocket.send(contToSend)
                 self.bleSocket.close()
-                print("[COMM CTRL][PKT] PKT Send OK\r\n")
+                print("[COMM CTRL][PKT] PKT Send OK")
                 # print(time.time())
         except Exception as e:
             print("[COMM CTRL][PKT] socket error:\r\n", e)
@@ -165,15 +201,6 @@ class commControlPanel:
 disAddr = "04:22:04:06:09:E5"
 
 print("Hello World")
-
-
-# nearby_devices = bt.discover_devices(5, flush_cache=True, lookup_names=True)
-
-# print("Found {} devices.".format(len(nearby_devices)))
-
-# print(nearby_devices)
-
-# sock = bt.BluetoothSocket(bt.RFCOMM)
 
 
 def sendQwQtoDis():
