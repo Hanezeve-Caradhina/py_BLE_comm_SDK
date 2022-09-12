@@ -1,6 +1,9 @@
 import math
+from typing import TextIO
+import os
 import bluetooth as bt
 import time
+import re
 
 # parameters
 DEBUG = True
@@ -58,7 +61,8 @@ class vehicleControlPanel:
 
 class commControlPanel:
     def __init__(self):
-        self.disAddr = "04:22:04:06:09:E5"
+        self.blePowerCTRL("ON")
+        self.disAddr = self.readAddrFromFile()
         self.disPort = 1
         self.bleSocket = bt.BluetoothSocket(bt.RFCOMM)
 
@@ -68,9 +72,44 @@ class commControlPanel:
             self.windowThreshold = 1
             self.windowRstCnt = 0
 
+    @staticmethod
+    def blePowerCTRL(sta):
+        try:
+            os.system("rfkill unblock bluetooth")
+            if sta == "ON":
+                os.system("hciconfig hci0 up")
+                os.system("bluetoothctl power on")
+            else:
+                os.system("bluetoothctl power off")
+        except Exception as e:
+            print("[POWER CTRL] ", e)
+            os.system("bluetoothctl power off")
+
+    @staticmethod
+    def checkMacAddr(macAddr):
+        pattern = re.compile(r"^\s*([0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}\s*$")
+        if pattern.match(macAddr):
+            return True
+        else:
+            return False
+
+    def readAddrFromFile(self):
+        addrFile = open("addr.dat", "r")
+        addr = addrFile.read()
+        addrFile.close()
+        print("[COMM CTRL][READ ADDR] " + addr)
+        if self.checkMacAddr(addr):
+            print("[COMM CTRL][READ ADDR] success")
+            return addr
+        else:
+            print("[COMM CTRL][READ ADDR] fail")
+            return ""
+
     def packetSend(self, cont):
         contToSend = self.contEncode(cont)
         try:
+            if not self.checkMacAddr(self.disAddr):
+                raise Exception("MAC Address illegal: " + self.disAddr)
             if CONGESTION_CONTROL_ENABLED:
                 self.bleSocket.connect((self.disAddr, self.disPort))
                 self.bleSocket.send(contToSend)
@@ -85,12 +124,14 @@ class commControlPanel:
                 self.windowPosNow += 1
                 # self.bleSocket.close()
                 print("[COMM CTRL][PKT] PKT Send OK\r\n")
+                # print(time.time())
             else:
                 self.bleSocket = bt.BluetoothSocket(bt.RFCOMM)
                 self.bleSocket.connect((self.disAddr, self.disPort))
                 self.bleSocket.send(contToSend)
                 self.bleSocket.close()
                 print("[COMM CTRL][PKT] PKT Send OK\r\n")
+                # print(time.time())
         except Exception as e:
             print("[COMM CTRL][PKT] socket error:\r\n", e)
             if CONGESTION_CONTROL_ENABLED:
