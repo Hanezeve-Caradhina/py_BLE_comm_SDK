@@ -194,7 +194,7 @@ class commControlPanel:
             ret += "%d,%d,%d,%d;" % (t.cat, t.xVal, t.yVal, t.alt)
         if DEBUG:
             print("[COMM CTRL][ENCODE] " + ret)
-        return ret
+        return ret+"\r\n"
 
 
 # disAddr = "C4:22:04:06:09:E5"
