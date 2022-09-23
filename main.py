@@ -185,13 +185,24 @@ class commControlPanel:
                 self.bleSocket = bt.BluetoothSocket(bt.RFCOMM)
 
     @staticmethod
-    def contEncode(cont):
+    def checkContentCat(t):
+        if t.cat not in [0, 1, 2, 3]:
+            return 1
+        else:
+            return 0
+
+    @staticmethod
+    def contEncode(self, cont):
         # cont is a dict from vehicleControlPanel
         ret = "-="
-        ret += "tot:%d;" % (len(cont))
+        ret += "t:%d;" % (len(cont))
         for key in cont:
             t = cont[key]
-            ret += "%d,%d,%d,%d;" % (t.cat, t.xVal, t.yVal, t.alt)
+            if self.checkContentCat(t):
+                print("[COMM CTRL][ENCODE][ERR] type error")
+                ret += "%d,%d,%d,%d;" % (0, t.xVal, t.yVal, t.alt)
+            else:
+                ret += "%d,%d,%d,%d;" % (t.cat, t.xVal, t.yVal, t.alt)
         if DEBUG:
             print("[COMM CTRL][ENCODE] " + ret)
         return ret+"\r\n"
