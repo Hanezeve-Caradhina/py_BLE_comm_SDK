@@ -14,6 +14,7 @@ disServUUID = "0000FFE0"
 disCharUUID = "0000FFE1"
 disName = "HCBRLRCV"
 ADDR_FILE = "addr.dat"
+X_OFFSET = 500
 
 
 class vehicleCat:
@@ -26,11 +27,11 @@ class vehicleCat:
 
 
 class vehicle:
-    def __init__(self, ID=0, cat=0, dis=0xFFFF, ang=0xFFFF, spd=0, isAlt=False):
+    def __init__(self, ID=0, cat=0, dis=233, ang=45, spd=0, isAlt=False):
         self.name = ID
         self.cat = cat
-        self.xVal = ang * math.cos(ang)
-        self.yVal = ang * math.sin(ang)
+        self.xVal = ang * math.cos(ang*math.pi/180) + X_OFFSET
+        self.yVal = ang * math.sin(ang*math.pi/180)
         self.dis = dis
         self.spd = spd
         self.alt = isAlt
@@ -191,7 +192,6 @@ class commControlPanel:
         else:
             return 0
 
-    @staticmethod
     def contEncode(self, cont):
         # cont is a dict from vehicleControlPanel
         ret = "-="
@@ -205,7 +205,7 @@ class commControlPanel:
                 ret += "%d,%d,%d,%d;" % (t.cat, t.xVal, t.yVal, t.alt)
         if DEBUG:
             print("[COMM CTRL][ENCODE] " + ret)
-        return ret+"\r\n"
+        return ret + "\r\n"
 
 
 # disAddr = "C4:22:04:06:09:E5"
@@ -232,9 +232,17 @@ tempCnt = 20
 
 commCtrl = commControlPanel()
 
+dicToSend = {0: vehicle(0, 1, 114, 30, 23, 1), 1: vehicle(1, 2, 233, 60, 23, 0)}
+
+temp = vehicle(0, 1, 114, 30, 23, 1)
+
+print(math.sin(45/180*math.pi))
+print(math.cos(60/180*math.pi))
+
 while tempCnt >= 0:
     tempCnt -= 1
-    commCtrl.packetSend({"QwQ": vehicle()})
+    commCtrl.packetSend(dicToSend)
+    # commCtrl.packetSend({"QwQ": vehicle()})
     # sendQwQtoDis()
     # print("QwQ sent")
     time.sleep(0.1)
