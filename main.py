@@ -12,7 +12,8 @@ CONGESTION_CONTROL_ENABLED = False
 PAIR_PIN = 2501
 disServUUID = "0000FFE0"
 disCharUUID = "0000FFE1"
-disName = "HCBRLRCV"
+disNameSPP = "HCRCVSPP"
+disNameBLE = "HCRCVBLE"
 ADDR_FILE = "addr.dat"
 X_OFFSET = 500
 
@@ -102,13 +103,12 @@ class commControlPanel:
     # sock = bt.BluetoothSocket(bt.RFCOMM)
 
     def findDevice(self, times):
-        name = ""
-        addr = ""
         while times >= 0:
             times -= 1
-            devices = bt.discover_devices(5, lookup_names=True)
+            devices = bt.discover_devices(duration=5, lookup_names=True, flush_cache=True, lookup_class=False)
+            print(devices)
             for item in devices:
-                if (item[1] == disName) and self.checkMacAddr(item[0]):
+                if (item[1] == disNameSPP) and self.checkMacAddr(item[0]):
                     print("[COMM CTRL][DEVICE SCAN] FOUND: ", item)
                     self.disAddr = item[0]
                     self.writeAddrToFile(item[0])
