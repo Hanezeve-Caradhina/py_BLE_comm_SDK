@@ -12,8 +12,8 @@ CONGESTION_CONTROL_ENABLED = False
 PAIR_PIN = 2501
 disServUUID = "0000FFE0"
 disCharUUID = "0000FFE1"
-disNameSPP = "HCRCVSPP"
-disNameBLE = "HCRCVBLE"
+disNameSPP = "HCRCVSPP\r\n"
+disNameBLE = "HCRCVBLE\r\n"
 ADDR_FILE = "addr.dat"
 X_OFFSET = 500
 
@@ -163,12 +163,8 @@ class commControlPanel:
                 print("[COMM CTRL][PKT] PKT Send OK")
                 # print(time.time())
             else:
-                self.bleSocket = bt.BluetoothSocket(bt.RFCOMM)
-                self.bleSocket.connect((self.disAddr, self.disPort))
                 self.bleSocket.send(contToSend)
-                self.bleSocket.close()
                 print("[COMM CTRL][PKT] PKT Send OK")
-                # print(time.time())
         except Exception as e:
             print("[COMM CTRL][PKT] socket error:\r\n", e)
             if CONGESTION_CONTROL_ENABLED:
@@ -184,6 +180,9 @@ class commControlPanel:
             else:
                 self.bleSocket.close()
                 self.bleSocket = bt.BluetoothSocket(bt.RFCOMM)
+            self.bleSocket.close()
+            self.bleSocket = bt.BluetoothSocket(bt.RFCOMM)
+            self.bleSocket.connect((self.disAddr, self.disPort))
 
     @staticmethod
     def checkContentCat(t):
