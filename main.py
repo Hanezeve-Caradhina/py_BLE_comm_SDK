@@ -1,5 +1,4 @@
 import math
-from typing import TextIO
 import os
 import bluetooth as bt
 import time
@@ -16,6 +15,7 @@ disNameSPP = "HCRCVSPP\r\n"
 disNameBLE = "HCRCVBLE\r\n"
 ADDR_FILE = "addr.dat"
 X_OFFSET = 240
+CALC_PARAM = 26.6666666667
 
 
 class vehicleCat:
@@ -31,9 +31,12 @@ class vehicle:
     def __init__(self, ID=0, cat=0, dis=233, ang=45, spd=0, isAlt=False):
         self.name = ID
         self.cat = cat
-        self.xVal = dis * math.cos(ang*math.pi/180) + X_OFFSET
-        self.yVal = dis * math.sin(ang*math.pi/180)
+        self.xVal = dis * math.cos(ang*math.pi/180) * CALC_PARAM + X_OFFSET
+        self.yVal = dis * math.sin(ang*math.pi/180) * CALC_PARAM
+        # self.xVal = xVal * CALC_PARAM + X_OFFSET
+        # self.yVal = yVal * CALC_PARAM
         self.dis = dis
+        self.dis = math.sqrt(self.xVal**2 + self.yVal**2)
         self.spd = spd
         self.alt = isAlt
 
@@ -209,8 +212,8 @@ class commControlPanel:
 
 # disAddr = "C4:22:04:06:09:E5"
 disAddr = "04:22:04:06:09:E5"
-
-print("Hello World")
+#
+# print("Hello World")
 
 
 def sendQwQtoDis():
@@ -227,16 +230,16 @@ def sendQwQtoDis():
         print("[SOCKET ERROR] ", e)
 
 
-tempCnt = 20
+# tempCnt = 20
+#
+# commCtrl = commControlPanel()
 
-commCtrl = commControlPanel()
+# dicToSend = {0: vehicle(0, 1, 114, 60, 23, 1), 1: vehicle(1, 2, 233, 120, 23, 0)}
 
-dicToSend = {0: vehicle(0, 1, 114, 60, 23, 1), 1: vehicle(1, 2, 233, 120, 23, 0)}
-
-temp = vehicle(0, 1, 114, 30, 23, 1)
-
-print(math.sin(45/180*math.pi))
-print(math.cos(60/180*math.pi))
+# temp = vehicle(0, 1, 114, 30, 23, 1)
+#
+# print(math.sin(45/180*math.pi))
+# print(math.cos(60/180*math.pi))
 
 # while tempCnt >= 0:
 #     tempCnt -= 1
@@ -246,16 +249,16 @@ print(math.cos(60/180*math.pi))
 #     # print("QwQ sent")
 #     time.sleep(0.2)
 
-angle1 = 60
-angle2 = 120
+# angle1 = 60
+# angle2 = 120
 
-while True:
-    angle1 += 10
-    if angle1 > 180:
-        angle1 -= 180
-    angle2 += 10
-    if angle2 > 180:
-        angle2 -= 180
-    dicToSend = {0: vehicle(0, 1, 114, angle1, 23, 1), 1: vehicle(1, 2, 233, angle2, 23, 0)}
-    commCtrl.packetSend(dicToSend)
-    time.sleep(0.1)
+# while True:
+#     angle1 += 10
+#     if angle1 > 180:
+#         angle1 -= 180
+#     angle2 += 10
+#     if angle2 > 180:
+#         angle2 -= 180
+#     dicToSend = {0: vehicle(0, 1, 114, angle1, 23, 1), 1: vehicle(1, 2, 233, angle2, 23, 0)}
+#     commCtrl.packetSend(dicToSend)
+#     time.sleep(0.5)
